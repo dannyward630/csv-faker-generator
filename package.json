@@ -18,7 +18,7 @@
   "scripts": {
     "build": "tsc",
     "prepare": "npm run build",
-    "test": "node dist/example.js"
+    "test": "npm run build && node --test test/index.test.js"
   },
   "keywords": [
     "csv",
