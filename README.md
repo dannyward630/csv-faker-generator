@@ -1,5 +1,10 @@
 # CSV Faker Generator
 
+[![npm version](https://img.shields.io/npm/v/csv-faker-generator.svg)](https://www.npmjs.com/package/csv-faker-generator)
+[![npm downloads](https://img.shields.io/npm/dm/csv-faker-generator.svg)](https://www.npmjs.com/package/csv-faker-generator)
+[![CI](https://github.com/manojkken/csv-faker-generator/actions/workflows/ci.yml/badge.svg)](https://github.com/manojkken/csv-faker-generator/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+
 Generate CSV files with realistic fake data using customizable headers and data types. Perfect for testing, prototyping, and development.
 
 ## Features
