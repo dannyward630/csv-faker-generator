@@ -1,6 +1,6 @@
 import { faker } from '@faker-js/faker';
 import { createObjectCsvWriter } from 'csv-writer';
-import * as path from 'path';
+import { writeFile } from 'node:fs/promises';
 
 export type DataType =
   | 'uuid'
@@ -47,6 +47,7 @@ export interface GenerateOptions {
   columns: ColumnDefinition[];
   rows: number;
   output: string;
+  format?: 'csv' | 'json' | 'ndjson';
   delimiter?: string;
 }
 
@@ -134,16 +135,7 @@ function generateValue(column: ColumnDefinition, row?: Record<string, any>): str
 }
 
 export async function generateCSV(options: GenerateOptions): Promise<void> {
-  const { columns, rows, output, delimiter = ',' } = options;
-
-  const csvWriter = createObjectCsvWriter({
-    path: output,
-    header: columns.map((col) => ({
-      id: col.header,
-      title: col.header,
-    })),
-    fieldDelimiter: delimiter,
-  });
+  const { columns, rows, output, format = 'csv', delimiter = ',' } = options;
 
   const records = [];
 
@@ -167,7 +159,23 @@ export async function generateCSV(options: GenerateOptions): Promise<void> {
     records.push(record);
   }
 
-  await csvWriter.writeRecords(records);
+  if (format === 'json') {
+    await writeFile(output, `${JSON.stringify(records, null, 2)}\n`);
+  } else if (format === 'ndjson') {
+    const content = records.map((record) => JSON.stringify(record)).join('\n');
+    await writeFile(output, content ? `${content}\n` : '');
+  } else {
+    const csvWriter = createObjectCsvWriter({
+      path: output,
+      header: columns.map((col) => ({
+        id: col.header,
+        title: col.header,
+      })),
+      fieldDelimiter: delimiter,
+    });
+    await csvWriter.writeRecords(records);
+  }
+
   console.log(`✓ Generated ${rows} rows in ${output}`);
 }
 

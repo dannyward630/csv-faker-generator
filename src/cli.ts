@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 
 import { generateCSV, parseColumnString, ColumnDefinition } from './index';
+import * as path from 'node:path';
 
 const args = process.argv.slice(2);
 
@@ -15,6 +16,7 @@ Options:
   --columns, -c    Column definitions (format: header:type,header:type,...)
   --rows, -r       Number of rows to generate (default: 10)
   --output, -o     Output file path (default: output.csv)
+  --format, -f     Output format: csv, json, or ndjson (default: inferred from output extension)
   --delimiter, -d  Field delimiter (default: ,) [options: , ; | \\t]
   --help, -h       Show this help message
 
@@ -32,13 +34,16 @@ Examples:
   csv-faker -c userId:uuid,firstName:firstName,lastName:lastName,email:email,address:address -r 50
   csv-faker --columns "id:uuid,company:company,city:city" --rows 20 --output companies.csv
   csv-faker -c id:uuid,name:name,email:email --delimiter ";" -r 50 -o contacts.csv
+  csv-faker -c id:uuid,name:name -r 50 -o users.json
+  csv-faker -c id:uuid,name:name -r 50 -f ndjson -o users.data
 `);
 }
 
-function parseArgs(): { columns: ColumnDefinition[]; rows: number; output: string; delimiter?: string } {
+function parseArgs(): { columns: ColumnDefinition[]; rows: number; output: string; format?: 'csv' | 'json' | 'ndjson'; delimiter?: string } {
   let columnsStr = '';
   let rows = 10;
   let output = 'output.csv';
+  let format: 'csv' | 'json' | 'ndjson' | undefined;
   let delimiter = ',';
 
   for (let i = 0; i < args.length; i++) {
@@ -57,6 +62,12 @@ function parseArgs(): { columns: ColumnDefinition[]; rows: number; output: strin
       }
     } else if (arg === '--output' || arg === '-o') {
       output = args[++i];
+    } else if (arg === '--format' || arg === '-f') {
+      const value = args[++i];
+      if (value !== 'csv' && value !== 'json' && value !== 'ndjson') {
+        throw new Error(`Invalid format: ${value}. Expected csv, json, or ndjson`);
+      }
+      format = value;
     } else if (arg === '--delimiter' || arg === '-d') {
       delimiter = args[++i];
       // Handle common escape sequences
@@ -74,7 +85,14 @@ function parseArgs(): { columns: ColumnDefinition[]; rows: number; output: strin
 
   const columns = columnsStr.split(',').map(parseColumnString);
 
-  return { columns, rows, output, delimiter };
+  if (!format) {
+    const extension = path.extname(output).slice(1).toLowerCase();
+    if (extension === 'json' || extension === 'ndjson') {
+      format = extension;
+    }
+  }
+
+  return { columns, rows, output, format, delimiter };
 }
 
 async function main() {

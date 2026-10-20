@@ -6,6 +6,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- JSON and NDJSON output formats for the programmatic API and CLI, including output-extension inference.
+
 ## [2.0.1] - 2026-10-20
 
 ### Fixed
