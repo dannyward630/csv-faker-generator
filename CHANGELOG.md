@@ -6,8 +6,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.1.0] - 2026-10-20
+
 ### Added
-- JSON and NDJSON output formats for the programmatic API and CLI, including output-extension inference.
+- JSON and NDJSON output formats for the programmatic API (`format` option) and CLI (`--format` / `-f`), inferred from `.json` / `.ndjson` output extensions when not specified. Thanks [@shubhambaghel34](https://github.com/shubhambaghel34)! (#10)
 
 ## [2.0.1] - 2026-10-20
 
@@ -39,7 +41,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - Initial release: CLI (`csv-faker`) and programmatic `generateCSV` API with Faker-backed data types.
 
-[Unreleased]: https://github.com/manojkken/csv-faker-generator/compare/v2.0.1...HEAD
+[Unreleased]: https://github.com/manojkken/csv-faker-generator/compare/v2.1.0...HEAD
+[2.1.0]: https://github.com/manojkken/csv-faker-generator/compare/v2.0.1...v2.1.0
 [2.0.1]: https://github.com/manojkken/csv-faker-generator/compare/v2.0.0...v2.0.1
 [2.0.0]: https://github.com/manojkken/csv-faker-generator/compare/v1.0.0...v2.0.0
 [1.0.0]: https://github.com/manojkken/csv-faker-generator/releases/tag/v1.0.0
