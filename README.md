@@ -13,6 +13,7 @@ Generate CSV files with realistic fake data using customizable headers and data 
 - **Advanced data generation**: Alphanumeric strings, pick from custom values, formula-based calculated fields
 - **Flexible number formatting**: Control decimal precision and ranges
 - **Custom delimiters**: Support for comma, semicolon, tab, pipe
+- **Multiple output formats**: CSV, JSON arrays, and newline-delimited JSON
 - **Simple CLI interface**: Generate CSV files from command line
 - **Programmatic API**: Use in Node.js/TypeScript projects
 - **Full TypeScript support**: Complete type definitions included
@@ -33,6 +34,10 @@ npx csv-faker -c id:uuid,name:name,email:email -r 100 -o users.csv
 
 # With custom delimiter
 npx csv-faker -c id:uuid,name:name,email:email --delimiter ";" -r 50 -o contacts.csv
+
+# JSON and NDJSON (also inferred from .json and .ndjson output extensions)
+npx csv-faker -c id:uuid,name:name,email:email -r 100 -o users.json
+npx csv-faker -c id:uuid,name:name,email:email -r 100 -f ndjson -o users.data
 ```
 
 ### Programmatic Usage
@@ -48,6 +53,20 @@ await generateCSV({
   ],
   rows: 100,
   output: 'users.csv',
+});
+```
+
+Set `format` to `'json'` for an array of row objects or `'ndjson'` for one row object per line. It defaults to `'csv'` in programmatic usage.
+
+```typescript
+await generateCSV({
+  columns: [
+    { header: 'id', type: 'uuid' },
+    { header: 'active', type: 'boolean' },
+  ],
+  rows: 100,
+  output: 'users.json',
+  format: 'json',
 });
 ```
 
@@ -202,6 +221,7 @@ await generateCSV({
 - `--columns, -c` - Column definitions (format: `header:type,header:type,...`)
 - `--rows, -r` - Number of rows to generate (default: 10)
 - `--output, -o` - Output file path (default: output.csv)
+- `--format, -f` - Output format: `csv`, `json`, or `ndjson` (default: inferred from `.json` / `.ndjson` extension, otherwise `csv`)
 - `--delimiter, -d` - Field delimiter (default: `,`) [options: `,` `;` `|` `\t`]
 - `--help, -h` - Show help message
 
@@ -283,6 +303,7 @@ interface GenerateOptions {
   columns: ColumnDefinition[];
   rows: number;
   output: string;
+  format?: 'csv' | 'json' | 'ndjson'; // Default: 'csv'
   delimiter?: string;        // Default: ','
 }
 

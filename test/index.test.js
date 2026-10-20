@@ -88,6 +88,36 @@ test('formula can reference columns declared after it', async () => {
   for (const [total, qty, price] of rows) assert.equal(+total, qty * price);
 });
 
+test('JSON format writes an array of row objects and defaults to CSV', async () => {
+  const jsonOutput = path.join(tmpDir, 'rows.json');
+  await generateCSV({
+    columns: [{ header: 'enabled', type: 'pick', values: [true] }, { header: 'count', type: 'pick', values: [3] }],
+    rows: 2,
+    output: jsonOutput,
+    format: 'json',
+  });
+  assert.deepEqual(JSON.parse(fs.readFileSync(jsonOutput, 'utf8')), [
+    { enabled: true, count: 3 },
+    { enabled: true, count: 3 },
+  ]);
+
+  const csvOutput = path.join(tmpDir, 'default.csv');
+  await generateCSV({ columns: [{ header: 'value', type: 'pick', values: ['ok'] }], rows: 1, output: csvOutput });
+  assert.equal(fs.readFileSync(csvOutput, 'utf8'), 'value\nok\n');
+});
+
+test('NDJSON format writes one row object per line', async () => {
+  const output = path.join(tmpDir, 'rows.ndjson');
+  await generateCSV({
+    columns: [{ header: 'value', type: 'pick', values: ['ok'] }],
+    rows: 2,
+    output,
+    format: 'ndjson',
+  });
+  const lines = fs.readFileSync(output, 'utf8').trim().split('\n');
+  assert.deepEqual(lines.map((line) => JSON.parse(line)), [{ value: 'ok' }, { value: 'ok' }]);
+});
+
 test('parseColumnString parses header:type', () => {
   assert.deepEqual(parseColumnString('id:uuid'), { header: 'id', type: 'uuid' });
 });
@@ -106,4 +136,16 @@ test('CLI generates a file', () => {
   const lines = fs.readFileSync(output, 'utf8').trim().split('\n');
   assert.equal(lines[0], 'id,name');
   assert.equal(lines.length, 6);
+});
+
+test('CLI accepts --format and infers JSON formats from the output extension', () => {
+  const { execFileSync } = require('node:child_process');
+  const cli = path.join(__dirname, '..', 'dist', 'cli.js');
+  const jsonOutput = path.join(tmpDir, 'cli-explicit.json');
+  execFileSync(process.execPath, [cli, '-c', 'id:uuid', '-r', '2', '-f', 'json', '-o', jsonOutput]);
+  assert.equal(JSON.parse(fs.readFileSync(jsonOutput, 'utf8')).length, 2);
+
+  const ndjsonOutput = path.join(tmpDir, 'cli-inferred.ndjson');
+  execFileSync(process.execPath, [cli, '-c', 'id:uuid', '-r', '2', '-o', ndjsonOutput]);
+  assert.equal(fs.readFileSync(ndjsonOutput, 'utf8').trim().split('\n').length, 2);
 });
