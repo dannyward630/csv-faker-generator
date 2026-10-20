@@ -52,6 +52,17 @@ test('number stays within min/max and honours decimals', async () => {
   }
 });
 
+test('number honours zero as a bound', async () => {
+  const { rows } = await generate([
+    { header: 'zero', type: 'number', min: 0, max: 0 },
+    { header: 'neg', type: 'number', min: -5, max: 0, decimals: 1 },
+  ]);
+  for (const [zero, neg] of rows) {
+    assert.equal(+zero, 0);
+    assert.ok(+neg >= -5 && +neg <= 0, `neg out of range: ${neg}`);
+  }
+});
+
 test('alphanumeric respects length and uppercase', async () => {
   const { rows } = await generate([{ header: 'code', type: 'alphanumeric', length: 8, uppercase: true }]);
   for (const [code] of rows) assert.match(code, /^[A-Z0-9]{8}$/);

@@ -83,9 +83,9 @@ function generateValue(column: ColumnDefinition, row?: Record<string, any>): str
     case 'jobTitle':
       return faker.person.jobTitle();
     case 'number': {
-      const num = faker.number.int({ min: min || 1, max: max || 1000 });
+      const num = faker.number.int({ min: min ?? 1, max: max ?? 1000 });
       if (decimals !== undefined) {
-        const float = faker.number.float({ min: min || 1, max: max || 1000, fractionDigits: decimals });
+        const float = faker.number.float({ min: min ?? 1, max: max ?? 1000, fractionDigits: decimals });
         return parseFloat(float.toFixed(decimals));
       }
       return num;
