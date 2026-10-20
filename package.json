@@ -1,6 +1,6 @@
 {
   "name": "csv-faker-generator",
-  "version": "2.0.0",
+  "version": "2.0.1",
   "description": "Generate CSV files with fake data: 27+ data types, alphanumeric strings, pick from custom values, formula fields, decimal precision, custom delimiters. Perfect for testing and prototyping.",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -43,6 +43,8 @@
   "license": "MIT",
   "files": [
     "dist",
+    "!dist/example.*",
+    "!dist/test-advanced.*",
     "README.md",
     "LICENSE"
   ],

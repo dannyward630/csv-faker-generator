@@ -6,9 +6,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.0.1] - 2026-10-20
+
+### Fixed
+- `number` type now honours `0` as `min` or `max` (previously an explicit `0` fell back to the default). (#4)
+
 ### Added
-- MIT `LICENSE` file.
-- Test suite (`node:test`) and GitHub Actions CI on Node 20, 22, and 24.
+- MIT `LICENSE` file. (#1)
+- Test suite (`node:test`) and GitHub Actions CI on Node 20, 22, and 24. (#2)
+- `CONTRIBUTING.md` guide. (#5)
+
+### Changed
+- Published package no longer includes the `example` and `test-advanced` demo scripts.
 
 ## [2.0.0] - 2025-12-02
 
@@ -27,6 +36,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - Initial release: CLI (`csv-faker`) and programmatic `generateCSV` API with Faker-backed data types.
 
-[Unreleased]: https://github.com/manojkken/csv-faker-generator/compare/v2.0.0...HEAD
+[Unreleased]: https://github.com/manojkken/csv-faker-generator/compare/v2.0.1...HEAD
+[2.0.1]: https://github.com/manojkken/csv-faker-generator/compare/v2.0.0...v2.0.1
 [2.0.0]: https://github.com/manojkken/csv-faker-generator/compare/v1.0.0...v2.0.0
 [1.0.0]: https://github.com/manojkken/csv-faker-generator/releases/tag/v1.0.0
