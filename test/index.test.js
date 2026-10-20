@@ -1,9 +1,12 @@
-const { test } = require('node:test');
+const { test, mock } = require('node:test');
 const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const os = require('node:os');
 const path = require('node:path');
 const { generateCSV, parseColumnString } = require('../dist/index');
+
+// generateCSV logs a status line per call; keep it out of the test reporter stream.
+mock.method(console, 'log', () => {});
 
 const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'csv-faker-'));
 
