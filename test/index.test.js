@@ -180,5 +180,49 @@ test('CLI accepts pick values', () => {
   const [header, ...values] = fs.readFileSync(output, 'utf8').trim().split('\n');
   assert.equal(header, 'status');
   assert.equal(values.length, 10);
-  for (const value of values) assert.ok(['active', 'inactive', 'pending'].includes(value));
+  for (const value of values) {
+    assert.ok(['active', 'inactive', 'pending'].includes(value));
+  }
+});
+test('generateCSV produces reproducible output when given the same seed', async () => {
+  const file1 = path.join(tmpDir, 'seeded-1.csv');
+  const file2 = path.join(tmpDir, 'seeded-2.csv');
+  const file3 = path.join(tmpDir, 'seeded-3.csv');
+
+  const columns = [
+    { header: 'id', type: 'uuid' },
+    { header: 'name', type: 'name' },
+    { header: 'email', type: 'email' },
+    { header: 'age', type: 'number', min: 18, max: 99 },
+  ];
+
+  await generateCSV({ columns, rows: 10, output: file1, seed: 12345 });
+  await generateCSV({ columns, rows: 10, output: file2, seed: 12345 });
+  await generateCSV({ columns, rows: 10, output: file3, seed: 54321 });
+
+  const content1 = fs.readFileSync(file1, 'utf8');
+  const content2 = fs.readFileSync(file2, 'utf8');
+  const content3 = fs.readFileSync(file3, 'utf8');
+
+  assert.equal(content1, content2);
+  assert.notEqual(content1, content3);
+});
+
+test('CLI accepts --seed and -s for reproducible output', () => {
+  const { execFileSync } = require('node:child_process');
+  const cli = path.join(__dirname, '..', 'dist', 'cli.js');
+  const out1 = path.join(tmpDir, 'cli-seed-1.csv');
+  const out2 = path.join(tmpDir, 'cli-seed-2.csv');
+  const out3 = path.join(tmpDir, 'cli-seed-3.csv');
+
+  execFileSync(process.execPath, [cli, '-c', 'id:uuid,name:name', '-r', '5', '--seed', '999', '-o', out1]);
+  execFileSync(process.execPath, [cli, '-c', 'id:uuid,name:name', '-r', '5', '-s', '999', '-o', out2]);
+  execFileSync(process.execPath, [cli, '-c', 'id:uuid,name:name', '-r', '5', '-s', '111', '-o', out3]);
+
+  const content1 = fs.readFileSync(out1, 'utf8');
+  const content2 = fs.readFileSync(out2, 'utf8');
+  const content3 = fs.readFileSync(out3, 'utf8');
+
+  assert.equal(content1, content2);
+  assert.notEqual(content1, content3);
 });

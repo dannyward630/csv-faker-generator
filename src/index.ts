@@ -52,6 +52,7 @@ export interface GenerateOptions {
   output: string;
   format?: 'csv' | 'json' | 'ndjson';
   delimiter?: string;
+  seed?: number;
 }
 
 function generateValue(column: ColumnDefinition, row?: Record<string, any>): string | number | boolean {
@@ -138,7 +139,11 @@ function generateValue(column: ColumnDefinition, row?: Record<string, any>): str
 }
 
 export async function generateCSV(options: GenerateOptions): Promise<void> {
-  const { columns, rows, output, format = 'csv', delimiter = ',' } = options;
+  const { columns, rows, output, format = 'csv', delimiter = ',', seed } = options;
+
+  if (seed !== undefined) {
+    faker.seed(seed);
+  }
 
   const records = [];
 

@@ -19,6 +19,7 @@ Options:
   --output, -o     Output file path (default: output.csv)
   --format, -f     Output format: csv, json, or ndjson (default: inferred from output extension)
   --delimiter, -d  Field delimiter (default: ,) [options: , ; | \\t]
+  --seed, -s       PRNG seed for reproducible output
   --help, -h       Show this help message
 
 Data Types:
@@ -38,15 +39,17 @@ Examples:
   csv-faker -c 'id:uuid,status:pick:active|inactive|pending' -r 10
   csv-faker -c id:uuid,name:name -r 50 -o users.json
   csv-faker -c id:uuid,name:name -r 50 -f ndjson -o users.data
+  csv-faker -c id:uuid,name:name -r 50 --seed 42 -o reproducible.csv
 `);
 }
 
-function parseArgs(): { columns: ColumnDefinition[]; rows: number; output: string; format?: 'csv' | 'json' | 'ndjson'; delimiter?: string } {
+function parseArgs(): { columns: ColumnDefinition[]; rows: number; output: string; format?: 'csv' | 'json' | 'ndjson'; delimiter?: string; seed?: number } {
   let columnsStr = '';
   let rows = 10;
   let output = 'output.csv';
   let format: 'csv' | 'json' | 'ndjson' | undefined;
   let delimiter = ',';
+  let seed: number | undefined;
 
   for (let i = 0; i < args.length; i++) {
     const arg = args[i];
@@ -76,6 +79,13 @@ function parseArgs(): { columns: ColumnDefinition[]; rows: number; output: strin
       if (delimiter === '\\t') {
         delimiter = '\t';
       }
+    } else if (arg === '--seed' || arg === '-s') {
+      const parsedSeed = parseInt(args[++i], 10);
+      if (isNaN(parsedSeed)) {
+        console.error('Error: seed must be a valid number');
+        process.exit(1);
+      }
+      seed = parsedSeed;
     }
   }
 
@@ -94,7 +104,7 @@ function parseArgs(): { columns: ColumnDefinition[]; rows: number; output: strin
     }
   }
 
-  return { columns, rows, output, format, delimiter };
+  return { columns, rows, output, format, delimiter, seed };
 }
 
 async function main() {
