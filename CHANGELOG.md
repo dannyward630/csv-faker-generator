@@ -6,9 +6,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.2.0] - 2026-10-21
+
 ### Added
-- CLI support for `pick` values in column definitions using `header:pick:value1|value2` syntax.
-- `--seed` / `-s` CLI flag and `seed` programmatic option in `GenerateOptions` for reproducible output via Faker PRNG seeding (#6).
+- `--seed` / `-s` CLI flag and `seed` option in `GenerateOptions` for reproducible output. Thanks [@slopggobblercobbler81](https://github.com/slopggobblercobbler81)! (#13)
+- CLI support for `pick` values using `header:pick:value1|value2` syntax. Thanks [@shubhambaghel34](https://github.com/shubhambaghel34)! (#14)
 
 ## [2.1.0] - 2026-10-20
 
@@ -45,7 +47,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - Initial release: CLI (`csv-faker`) and programmatic `generateCSV` API with Faker-backed data types.
 
-[Unreleased]: https://github.com/manojkken/csv-faker-generator/compare/v2.1.0...HEAD
+[Unreleased]: https://github.com/manojkken/csv-faker-generator/compare/v2.2.0...HEAD
+[2.2.0]: https://github.com/manojkken/csv-faker-generator/compare/v2.1.0...v2.2.0
 [2.1.0]: https://github.com/manojkken/csv-faker-generator/compare/v2.0.1...v2.1.0
 [2.0.1]: https://github.com/manojkken/csv-faker-generator/compare/v2.0.0...v2.0.1
 [2.0.0]: https://github.com/manojkken/csv-faker-generator/compare/v1.0.0...v2.0.0
