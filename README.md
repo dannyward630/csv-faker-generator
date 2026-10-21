@@ -14,6 +14,7 @@ Generate CSV files with realistic fake data using customizable headers and data 
 - **Flexible number formatting**: Control decimal precision and ranges
 - **Custom delimiters**: Support for comma, semicolon, tab, pipe
 - **Multiple output formats**: CSV, JSON arrays, and newline-delimited JSON
+- **Reproducible data**: Seed support for consistent test fixtures and snapshot testing
 - **Simple CLI interface**: Generate CSV files from command line
 - **Programmatic API**: Use in Node.js/TypeScript projects
 - **Full TypeScript support**: Complete type definitions included
@@ -38,6 +39,9 @@ npx csv-faker -c id:uuid,name:name,email:email --delimiter ";" -r 50 -o contacts
 # JSON and NDJSON (also inferred from .json and .ndjson output extensions)
 npx csv-faker -c id:uuid,name:name,email:email -r 100 -o users.json
 npx csv-faker -c id:uuid,name:name,email:email -r 100 -f ndjson -o users.data
+
+# Reproducible output with seed
+npx csv-faker -c id:uuid,name:name,email:email -r 100 --seed 42 -o users.csv
 ```
 
 ### Programmatic Usage
@@ -223,6 +227,7 @@ await generateCSV({
 - `--output, -o` - Output file path (default: output.csv)
 - `--format, -f` - Output format: `csv`, `json`, or `ndjson` (default: inferred from `.json` / `.ndjson` extension, otherwise `csv`)
 - `--delimiter, -d` - Field delimiter (default: `,`) [options: `,` `;` `|` `\t`]
+- `--seed, -s` - PRNG seed for reproducible output
 - `--help, -h` - Show help message
 
 ### Examples
@@ -230,6 +235,9 @@ await generateCSV({
 ```bash
 # Generate users
 npx csv-faker -c id:uuid,name:name,email:email -r 100 -o users.csv
+
+# Generate reproducible fixtures with seed
+npx csv-faker -c id:uuid,name:name,email:email -r 50 --seed 42 -o users.csv
 
 # Generate with semicolon delimiter
 npx csv-faker -c id:uuid,name:name,email:email --delimiter ";" -r 50 -o contacts.csv
@@ -305,6 +313,7 @@ interface GenerateOptions {
   output: string;
   format?: 'csv' | 'json' | 'ndjson'; // Default: 'csv'
   delimiter?: string;        // Default: ','
+  seed?: number;             // PRNG seed for reproducible output
 }
 
 function generateCSV(options: GenerateOptions): Promise<void>;
