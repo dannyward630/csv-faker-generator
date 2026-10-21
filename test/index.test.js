@@ -122,9 +122,29 @@ test('parseColumnString parses header:type', () => {
   assert.deepEqual(parseColumnString('id:uuid'), { header: 'id', type: 'uuid' });
 });
 
+test('parseColumnString parses pick values including colons', () => {
+  assert.deepEqual(parseColumnString('status:pick:active|inactive|pending'), {
+    header: 'status',
+    type: 'pick',
+    values: ['active', 'inactive', 'pending'],
+  });
+  assert.deepEqual(parseColumnString('status:pick: active | inactive '), {
+    header: 'status',
+    type: 'pick',
+    values: ['active', 'inactive'],
+  });
+  assert.deepEqual(parseColumnString('url:pick:http://a|http://b'), {
+    header: 'url',
+    type: 'pick',
+    values: ['http://a', 'http://b'],
+  });
+});
+
 test('parseColumnString rejects bad input', () => {
   assert.throws(() => parseColumnString('id'), /Invalid column format/);
   assert.throws(() => parseColumnString('id:nope'), /Invalid data type/);
+  assert.throws(() => parseColumnString('status:pick'), /pick type.*requires values/);
+  assert.throws(() => parseColumnString('status:pick: | '), /pick type.*requires values/);
 });
 
 test('CLI generates a file', () => {
@@ -148,4 +168,17 @@ test('CLI accepts --format and infers JSON formats from the output extension', (
   const ndjsonOutput = path.join(tmpDir, 'cli-inferred.ndjson');
   execFileSync(process.execPath, [cli, '-c', 'id:uuid', '-r', '2', '-o', ndjsonOutput]);
   assert.equal(fs.readFileSync(ndjsonOutput, 'utf8').trim().split('\n').length, 2);
+});
+
+test('CLI accepts pick values', () => {
+  const { execFileSync } = require('node:child_process');
+  const output = path.join(tmpDir, 'cli-pick.csv');
+  execFileSync(process.execPath, [
+    path.join(__dirname, '..', 'dist', 'cli.js'),
+    '-c', 'status:pick:active|inactive|pending', '-r', '10', '-o', output,
+  ]);
+  const [header, ...values] = fs.readFileSync(output, 'utf8').trim().split('\n');
+  assert.equal(header, 'status');
+  assert.equal(values.length, 10);
+  for (const value of values) assert.ok(['active', 'inactive', 'pending'].includes(value));
 });

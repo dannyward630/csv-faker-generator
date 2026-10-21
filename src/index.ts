@@ -2,6 +2,9 @@ import { faker } from '@faker-js/faker';
 import { createObjectCsvWriter } from 'csv-writer';
 import { writeFile } from 'node:fs/promises';
 
+const COLUMN_DEFINITION_SEPARATOR = ':';
+const PICK_VALUES_SEPARATOR = '|';
+
 export type DataType =
   | 'uuid'
   | 'name'
@@ -180,7 +183,7 @@ export async function generateCSV(options: GenerateOptions): Promise<void> {
 }
 
 export function parseColumnString(columnStr: string): ColumnDefinition {
-  const parts = columnStr.split(':');
+  const parts = columnStr.split(COLUMN_DEFINITION_SEPARATOR);
   if (parts.length < 2) {
     throw new Error(`Invalid column format: ${columnStr}. Expected format: header:type`);
   }
@@ -197,6 +200,18 @@ export function parseColumnString(columnStr: string): ColumnDefinition {
 
   if (!validTypes.includes(type)) {
     throw new Error(`Invalid data type: ${type}. Valid types: ${validTypes.join(', ')}`);
+  }
+
+  if (type === 'pick') {
+    const values = parts.slice(2)
+      .join(COLUMN_DEFINITION_SEPARATOR)
+      .split(PICK_VALUES_SEPARATOR)
+      .map((value) => value.trim())
+      .filter(Boolean);
+    if (values.length === 0) {
+      throw new Error(`pick type for column "${header}" requires values after the second colon, separated by |`);
+    }
+    return { header, type, values };
   }
 
   return { header, type };
