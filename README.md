@@ -242,11 +242,14 @@ npx csv-faker -c id:uuid,name:name,email:email -r 50 --seed 42 -o users.csv
 # Generate with semicolon delimiter
 npx csv-faker -c id:uuid,name:name,email:email --delimiter ";" -r 50 -o contacts.csv
 
+# Generate a status from fixed values (quote the argument so the shell passes `|` literally)
+npx csv-faker -c 'id:uuid,status:pick:active|inactive|pending' -r 10 -o users.csv
+
 # Generate customer data
 npx csv-faker -c customer_number:number,title:title,firstname:firstName,lastname:lastName,email:email,iban:iban,bic:bic -r 200 -o customers.csv
 ```
 
-**Note**: Advanced features like `alphanumeric` with length, `pick` with values, and `formula` require programmatic usage. CLI only supports basic data types.
+**Note**: CLI `pick` values use `header:pick:value1|value2`; quote the `-c` argument in shells so `|` is passed literally. Advanced `alphanumeric` options and `formula` still require programmatic usage.
 
 ## Supported Data Types
 
