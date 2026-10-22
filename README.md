@@ -11,6 +11,7 @@ Generate CSV files with realistic fake data using customizable headers and data 
 
 - **27+ data types**: UUID, names, emails, addresses, banking info, and more
 - **Advanced data generation**: Alphanumeric strings, pick from custom values, formula-based calculated fields
+- **Date ranges**: Optional `from`/`to` bounds and `YYYY-MM-DD` output via `dateFormat`
 - **Flexible number formatting**: Control decimal precision and ranges
 - **Custom delimiters**: Support for comma, semicolon, tab, pipe
 - **Multiple output formats**: CSV, JSON arrays, and newline-delimited JSON
@@ -245,11 +246,14 @@ npx csv-faker -c id:uuid,name:name,email:email --delimiter ";" -r 50 -o contacts
 # Generate a status from fixed values (quote the argument so the shell passes `|` literally)
 npx csv-faker -c 'id:uuid,status:pick:active|inactive|pending' -r 10 -o users.csv
 
+# Generate dates within a range (same `|` quoting rules as pick)
+npx csv-faker -c 'id:uuid,created:date:2024-01-01|2024-12-31' -r 10 -o orders.csv
+
 # Generate customer data
 npx csv-faker -c customer_number:number,title:title,firstname:firstName,lastname:lastName,email:email,iban:iban,bic:bic -r 200 -o customers.csv
 ```
 
-**Note**: CLI `pick` values use `header:pick:value1|value2`; quote the `-c` argument in shells so `|` is passed literally. Advanced `alphanumeric` options and `formula` still require programmatic usage.
+**Note**: CLI `pick` values use `header:pick:value1|value2`, and date ranges use `header:date:from|to`; quote the `-c` argument in shells so `|` is passed literally. Advanced `alphanumeric` options, `dateFormat`, and `formula` still require programmatic usage.
 
 ## Supported Data Types
 
@@ -270,7 +274,7 @@ npx csv-faker -c customer_number:number,title:title,firstname:firstName,lastname
 | `company` | Company name | `Tech Corp` | ✓ | ✓ |
 | `jobTitle` | Job title | `Software Engineer` | ✓ | ✓ |
 | `number` | Random number | `42` | ✓ | ✓ |
-| `date` | ISO date | `2024-01-15T10:30:00.000Z` | ✓ | ✓ |
+| `date` | ISO date (optional `from`/`to` range, `dateFormat`) | `2024-01-15T10:30:00.000Z` | ✓* | ✓ |
 | `boolean` | Boolean | `true` / `false` | ✓ | ✓ |
 | `url` | Website URL | `https://example.com` | ✓ | ✓ |
 | `ip` | IP address | `192.168.1.1` | ✓ | ✓ |
@@ -283,7 +287,7 @@ npx csv-faker -c customer_number:number,title:title,firstname:firstName,lastname
 | `pick` | Pick from array | Custom values | ✓* | ✓ |
 | `formula` | Calculated value | Based on other fields | ✗ | ✓ |
 
-*CLI supports the type but not advanced options (length, uppercase, values, etc.)
+*CLI supports `pick` values and `date` ranges via `header:type:...` syntax. Other advanced options (`length`, `uppercase`, `dateFormat`, `formula`, etc.) need programmatic usage.
 
 ## TypeScript API
 
@@ -308,6 +312,9 @@ interface ColumnDefinition {
   values?: any[];            // For 'pick' type
   formula?: (row: Record<string, any>) => any; // For 'formula' type
   decimals?: number;         // For 'number' type
+  from?: string;             // For 'date' type (ISO); requires `to`
+  to?: string;               // For 'date' type (ISO); requires `from`
+  dateFormat?: 'iso' | 'date'; // For 'date' type; 'date' => YYYY-MM-DD
 }
 
 interface GenerateOptions {
@@ -333,7 +340,8 @@ await generateCSV({
     { header: 'username', type: 'username' },
     { header: 'email', type: 'email' },
     { header: 'password', type: 'password' },
-    { header: 'createdAt', type: 'date' },
+    { header: 'createdAt', type: 'date', from: '2024-01-01', to: '2024-12-31' },
+    { header: 'birthday', type: 'date', from: '1970-01-01', to: '2005-12-31', dateFormat: 'date' },
   ],
   rows: 1000,
   output: 'users.csv',
