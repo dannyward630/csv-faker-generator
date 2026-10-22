@@ -42,6 +42,10 @@ npx csv-faker -c id:uuid,name:name,email:email -r 100 -f ndjson -o users.data
 
 # Reproducible output with seed
 npx csv-faker -c id:uuid,name:name,email:email -r 100 --seed 42 -o users.csv
+
+# Write to stdout and pipe into other tools (status line goes to stderr)
+npx csv-faker -c id:uuid,email:email -r 5 -o - | head
+npx csv-faker -c id:uuid -r 3 -f ndjson -o - | jq .
 ```
 
 ### Programmatic Usage
@@ -224,7 +228,7 @@ await generateCSV({
 
 - `--columns, -c` - Column definitions (format: `header:type,header:type,...`)
 - `--rows, -r` - Number of rows to generate (default: 10)
-- `--output, -o` - Output file path (default: output.csv)
+- `--output, -o` - Output file path (default: output.csv). Use `-` for stdout
 - `--format, -f` - Output format: `csv`, `json`, or `ndjson` (default: inferred from `.json` / `.ndjson` extension, otherwise `csv`)
 - `--delimiter, -d` - Field delimiter (default: `,`) [options: `,` `;` `|` `\t`]
 - `--seed, -s` - PRNG seed for reproducible output
@@ -247,6 +251,8 @@ npx csv-faker -c 'id:uuid,status:pick:active|inactive|pending' -r 10 -o users.cs
 
 # Generate alphanumeric codes with length and uppercase
 npx csv-faker -c 'sku:alphanumeric:12,code:alphanumeric:8:upper' -r 10 -o products.csv
+# Stream JSON to stdout
+npx csv-faker -c id:uuid -r 3 -f ndjson -o - | jq .
 
 # Generate customer data
 npx csv-faker -c customer_number:number,title:title,firstname:firstName,lastname:lastName,email:email,iban:iban,bic:bic -r 200 -o customers.csv

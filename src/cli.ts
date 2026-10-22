@@ -5,6 +5,12 @@ import * as path from 'node:path';
 
 const args = process.argv.slice(2);
 
+// Exit quietly when the reader closes the pipe early (e.g. `-o - | head`).
+process.stdout.on('error', (err: NodeJS.ErrnoException) => {
+  if (err.code === 'EPIPE') process.exit(0);
+  throw err;
+});
+
 function showHelp() {
   console.log(`
 CSV Faker Generator
@@ -17,7 +23,7 @@ Options:
                     For pick values, use header:pick:value1|value2 (quote the argument)
                     For alphanumeric, use header:alphanumeric[:length][:upper]
   --rows, -r       Number of rows to generate (default: 10)
-  --output, -o     Output file path (default: output.csv)
+  --output, -o     Output file path (default: output.csv). Use - for stdout
   --format, -f     Output format: csv, json, or ndjson (default: inferred from output extension)
   --delimiter, -d  Field delimiter (default: ,) [options: , ; | \\t]
   --seed, -s       PRNG seed for reproducible output
@@ -41,6 +47,8 @@ Examples:
   csv-faker -c id:uuid,name:name -r 50 -o users.json
   csv-faker -c id:uuid,name:name -r 50 -f ndjson -o users.data
   csv-faker -c id:uuid,name:name -r 50 --seed 42 -o reproducible.csv
+  csv-faker -c id:uuid,email:email -r 5 -o - | head
+  csv-faker -c id:uuid -r 3 -f ndjson -o - | jq .
 `);
 }
 
@@ -61,9 +69,9 @@ function parseArgs(): { columns: ColumnDefinition[]; rows: number; output: strin
     } else if (arg === '--columns' || arg === '-c') {
       columnsStr = args[++i];
     } else if (arg === '--rows' || arg === '-r') {
-      rows = parseInt(args[++i], 10);
-      if (isNaN(rows) || rows < 1) {
-        console.error('Error: rows must be a positive number');
+      rows = Number(args[++i]);
+      if (!Number.isInteger(rows) || rows < 1) {
+        console.error('Error: rows must be a positive integer');
         process.exit(1);
       }
     } else if (arg === '--output' || arg === '-o') {
@@ -81,9 +89,10 @@ function parseArgs(): { columns: ColumnDefinition[]; rows: number; output: strin
         delimiter = '\t';
       }
     } else if (arg === '--seed' || arg === '-s') {
-      const parsedSeed = parseInt(args[++i], 10);
-      if (isNaN(parsedSeed)) {
-        console.error('Error: seed must be a valid number');
+      const value = args[++i];
+      const parsedSeed = Number(value);
+      if (!value?.trim() || !Number.isInteger(parsedSeed)) {
+        console.error('Error: seed must be an integer');
         process.exit(1);
       }
       seed = parsedSeed;
