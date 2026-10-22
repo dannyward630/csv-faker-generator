@@ -141,6 +141,10 @@ function generateValue(column: ColumnDefinition, row?: Record<string, any>): str
 export async function generateCSV(options: GenerateOptions): Promise<void> {
   const { columns, rows, output, format = 'csv', delimiter = ',', seed } = options;
 
+  if (format !== 'csv' && format !== 'json' && format !== 'ndjson') {
+    throw new Error(`Invalid format: ${format}. Expected csv, json, or ndjson`);
+  }
+
   if (seed !== undefined) {
     faker.seed(seed);
   }

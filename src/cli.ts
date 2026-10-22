@@ -62,9 +62,9 @@ function parseArgs(): { columns: ColumnDefinition[]; rows: number; output: strin
     } else if (arg === '--columns' || arg === '-c') {
       columnsStr = args[++i];
     } else if (arg === '--rows' || arg === '-r') {
-      rows = parseInt(args[++i], 10);
-      if (isNaN(rows) || rows < 1) {
-        console.error('Error: rows must be a positive number');
+      rows = Number(args[++i]);
+      if (!Number.isInteger(rows) || rows < 1) {
+        console.error('Error: rows must be a positive integer');
         process.exit(1);
       }
     } else if (arg === '--output' || arg === '-o') {
@@ -82,9 +82,10 @@ function parseArgs(): { columns: ColumnDefinition[]; rows: number; output: strin
         delimiter = '\t';
       }
     } else if (arg === '--seed' || arg === '-s') {
-      const parsedSeed = parseInt(args[++i], 10);
-      if (isNaN(parsedSeed)) {
-        console.error('Error: seed must be a valid number');
+      const value = args[++i];
+      const parsedSeed = Number(value);
+      if (!value?.trim() || !Number.isInteger(parsedSeed)) {
+        console.error('Error: seed must be an integer');
         process.exit(1);
       }
       seed = parsedSeed;

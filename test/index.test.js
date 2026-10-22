@@ -118,6 +118,44 @@ test('NDJSON format writes one row object per line', async () => {
   assert.deepEqual(lines.map((line) => JSON.parse(line)), [{ value: 'ok' }, { value: 'ok' }]);
 });
 
+test('generateCSV rejects invalid formats without creating files', async () => {
+  const output = path.join(tmpDir, 'invalid-format.csv');
+  for (const format of ['xml', '', 'CSV', null, 0]) {
+    await assert.rejects(generateCSV({
+      columns: [{ header: 'value', type: 'pick', values: ['ok'] }],
+      rows: 1,
+      output,
+      format,
+    }), { message: `Invalid format: ${format}. Expected csv, json, or ndjson` });
+    assert.equal(fs.existsSync(output), false);
+  }
+});
+
+test('invalid format preserves existing output and does not generate or reseed data', async () => {
+  const { faker } = require('@faker-js/faker');
+  const output = path.join(tmpDir, 'preserved-format.csv');
+  fs.writeFileSync(output, 'existing content\n');
+  let formulaCalls = 0;
+  faker.seed(123);
+  const expectedNextId = faker.string.uuid();
+  faker.seed(123);
+
+  await assert.rejects(generateCSV({
+    columns: [
+      { header: 'id', type: 'uuid' },
+      { header: 'value', type: 'formula', formula: () => ++formulaCalls },
+    ],
+    rows: 1,
+    output,
+    format: 'xml',
+    seed: 456,
+  }), { message: 'Invalid format: xml. Expected csv, json, or ndjson' });
+
+  assert.equal(fs.readFileSync(output, 'utf8'), 'existing content\n');
+  assert.equal(formulaCalls, 0);
+  assert.equal(faker.string.uuid(), expectedNextId);
+});
+
 test('parseColumnString parses header:type', () => {
   assert.deepEqual(parseColumnString('id:uuid'), { header: 'id', type: 'uuid' });
 });
@@ -180,6 +218,56 @@ test('CLI writes to stdout when -o is -', () => {
     { value: 'ok' },
     { value: 'ok' },
   ]);
+});
+
+for (const option of ['--rows', '-r', '--seed', '-s']) {
+  test(`CLI rejects invalid ${option} values without creating files`, async (t) => {
+    const { spawnSync } = require('node:child_process');
+    const cli = path.join(__dirname, '..', 'dist', 'cli.js');
+    const isRows = option === '--rows' || option === '-r';
+    const invalidValues = [isRows ? '10abc' : '42abc', '1.5', 'NaN', 'Infinity', '', '   ', undefined, '--output'];
+    if (isRows) invalidValues.push('0', '-1');
+
+    for (const value of invalidValues) {
+      await t.test(value === undefined ? 'missing value' : JSON.stringify(value), () => {
+        const output = path.join(tmpDir, `invalid-${option}-${invalidValues.indexOf(value)}.csv`);
+        const args = [cli, '-c', 'id:uuid', '-o', output, option];
+        if (value !== undefined) args.push(value);
+        const result = spawnSync(process.execPath, args, { encoding: 'utf8' });
+        assert.equal(result.status, 1, result.stderr);
+        assert.match(result.stderr, isRows ? /rows must be a positive integer/ : /seed must be an integer/);
+        assert.equal(result.stdout, '');
+        assert.equal(fs.existsSync(output), false);
+      });
+    }
+  });
+}
+
+test('invalid CLI numbers preserve existing output', () => {
+  const { spawnSync } = require('node:child_process');
+  const cli = path.join(__dirname, '..', 'dist', 'cli.js');
+  const output = path.join(tmpDir, 'preserved-number.csv');
+  fs.writeFileSync(output, 'existing content\n');
+
+  for (const [option, value] of [['--rows', '10abc'], ['--seed', '42abc']]) {
+    const result = spawnSync(process.execPath, [cli, '-c', 'id:uuid', '-o', output, option, value]);
+    assert.equal(result.status, 1);
+    assert.equal(fs.readFileSync(output, 'utf8'), 'existing content\n');
+  }
+});
+
+test('CLI accepts integer numeric values including zero and negative seeds', () => {
+  const { execFileSync } = require('node:child_process');
+  const cli = path.join(__dirname, '..', 'dist', 'cli.js');
+  const longOutput = path.join(tmpDir, 'valid-long.json');
+  const shortOutput = path.join(tmpDir, 'valid-short.json');
+
+  for (const seed of ['0', '-42', '42']) {
+    execFileSync(process.execPath, [cli, '-c', 'id:uuid', '--rows', '2.0', '--seed', seed, '-o', longOutput]);
+    execFileSync(process.execPath, [cli, '-c', 'id:uuid', '-r', '2e0', '-s', seed, '-o', shortOutput]);
+    assert.equal(JSON.parse(fs.readFileSync(longOutput, 'utf8')).length, 2);
+    assert.equal(fs.readFileSync(longOutput, 'utf8'), fs.readFileSync(shortOutput, 'utf8'));
+  }
 });
 
 test('CLI accepts --format and infers JSON formats from the output extension', () => {

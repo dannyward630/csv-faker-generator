@@ -9,6 +9,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - CLI `-o -` writes generated data to stdout (CSV via stringifier; JSON/NDJSON via `process.stdout`). Status line goes to stderr so pipes stay clean. (#18)
 
+### Fixed
+- Reject invalid or fractional CLI `--rows` / `--seed` values and unknown programmatic output formats. (#19)
+
 ## [2.2.0] - 2026-10-21
 
 ### Added
