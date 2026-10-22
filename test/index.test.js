@@ -158,6 +158,30 @@ test('CLI generates a file', () => {
   assert.equal(lines.length, 6);
 });
 
+test('CLI writes to stdout when -o is -', () => {
+  const { execFileSync } = require('node:child_process');
+  const cli = path.join(__dirname, '..', 'dist', 'cli.js');
+
+  const csvOut = execFileSync(process.execPath, [
+    cli, '-c', 'value:pick:ok', '-r', '2', '-o', '-',
+  ], { encoding: 'utf8' });
+  assert.equal(csvOut, 'value\nok\nok\n');
+  assert.ok(!csvOut.includes('Generated'));
+
+  const jsonOut = execFileSync(process.execPath, [
+    cli, '-c', 'value:pick:ok', '-r', '2', '-f', 'json', '-o', '-',
+  ], { encoding: 'utf8' });
+  assert.deepEqual(JSON.parse(jsonOut), [{ value: 'ok' }, { value: 'ok' }]);
+
+  const ndjsonOut = execFileSync(process.execPath, [
+    cli, '-c', 'value:pick:ok', '-r', '2', '-f', 'ndjson', '-o', '-',
+  ], { encoding: 'utf8' });
+  assert.deepEqual(ndjsonOut.trim().split('\n').map((line) => JSON.parse(line)), [
+    { value: 'ok' },
+    { value: 'ok' },
+  ]);
+});
+
 test('CLI accepts --format and infers JSON formats from the output extension', () => {
   const { execFileSync } = require('node:child_process');
   const cli = path.join(__dirname, '..', 'dist', 'cli.js');
