@@ -338,3 +338,17 @@ test('CLI accepts --seed and -s for reproducible output', () => {
   assert.equal(content1, content2);
   assert.notEqual(content1, content3);
 });
+
+test('CLI exits cleanly when stdout is closed early (EPIPE)', async () => {
+  const { spawn } = require('node:child_process');
+  const cli = path.join(__dirname, '..', 'dist', 'cli.js');
+  const child = spawn(process.execPath, [cli, '-c', 'id:uuid', '-r', '200000', '-o', '-'], {
+    stdio: ['ignore', 'pipe', 'pipe'],
+  });
+  let stderr = '';
+  child.stderr.on('data', (chunk) => { stderr += chunk; });
+  child.stdout.once('data', () => child.stdout.destroy());
+  const code = await new Promise((resolve) => child.on('close', resolve));
+  assert.doesNotMatch(stderr, /Unhandled 'error'/);
+  assert.equal(code, 0, stderr);
+});

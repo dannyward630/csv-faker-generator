@@ -207,7 +207,7 @@ export async function generateCSV(options: GenerateOptions): Promise<void> {
     await csvWriter.writeRecords(records);
   }
 
-  const status = `✓ Generated ${rows} rows in ${output}`;
+  const status = `✓ Generated ${rows} rows ${toStdout ? 'to stdout' : `in ${output}`}`;
   if (toStdout) {
     console.error(status);
   } else {

@@ -5,6 +5,12 @@ import * as path from 'node:path';
 
 const args = process.argv.slice(2);
 
+// Exit quietly when the reader closes the pipe early (e.g. `-o - | head`).
+process.stdout.on('error', (err: NodeJS.ErrnoException) => {
+  if (err.code === 'EPIPE') process.exit(0);
+  throw err;
+});
+
 function showHelp() {
   console.log(`
 CSV Faker Generator
