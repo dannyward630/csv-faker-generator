@@ -155,6 +155,44 @@ test('NDJSON format writes one row object per line', async () => {
   assert.deepEqual(lines.map((line) => JSON.parse(line)), [{ value: 'ok' }, { value: 'ok' }]);
 });
 
+test('generateCSV rejects invalid formats without creating files', async () => {
+  const output = path.join(tmpDir, 'invalid-format.csv');
+  for (const format of ['xml', '', 'CSV', null, 0]) {
+    await assert.rejects(generateCSV({
+      columns: [{ header: 'value', type: 'pick', values: ['ok'] }],
+      rows: 1,
+      output,
+      format,
+    }), { message: `Invalid format: ${format}. Expected csv, json, or ndjson` });
+    assert.equal(fs.existsSync(output), false);
+  }
+});
+
+test('invalid format preserves existing output and does not generate or reseed data', async () => {
+  const { faker } = require('@faker-js/faker');
+  const output = path.join(tmpDir, 'preserved-format.csv');
+  fs.writeFileSync(output, 'existing content\n');
+  let formulaCalls = 0;
+  faker.seed(123);
+  const expectedNextId = faker.string.uuid();
+  faker.seed(123);
+
+  await assert.rejects(generateCSV({
+    columns: [
+      { header: 'id', type: 'uuid' },
+      { header: 'value', type: 'formula', formula: () => ++formulaCalls },
+    ],
+    rows: 1,
+    output,
+    format: 'xml',
+    seed: 456,
+  }), { message: 'Invalid format: xml. Expected csv, json, or ndjson' });
+
+  assert.equal(fs.readFileSync(output, 'utf8'), 'existing content\n');
+  assert.equal(formulaCalls, 0);
+  assert.equal(faker.string.uuid(), expectedNextId);
+});
+
 test('parseColumnString parses header:type', () => {
   assert.deepEqual(parseColumnString('id:uuid'), { header: 'id', type: 'uuid' });
 });
@@ -189,6 +227,23 @@ test('parseColumnString parses date ranges', () => {
     type: 'date',
     from: '2024-01-01',
     to: '2024-12-31',
+test('parseColumnString parses alphanumeric length and upper', () => {
+  assert.deepEqual(parseColumnString('sku:alphanumeric'), { header: 'sku', type: 'alphanumeric' });
+  assert.deepEqual(parseColumnString('sku:alphanumeric:12'), {
+    header: 'sku',
+    type: 'alphanumeric',
+    length: 12,
+  });
+  assert.deepEqual(parseColumnString('code:alphanumeric:8:upper'), {
+    header: 'code',
+    type: 'alphanumeric',
+    length: 8,
+    uppercase: true,
+  });
+  assert.deepEqual(parseColumnString('code:alphanumeric:upper'), {
+    header: 'code',
+    type: 'alphanumeric',
+    uppercase: true,
   });
 });
 
@@ -199,6 +254,10 @@ test('parseColumnString rejects bad input', () => {
   assert.throws(() => parseColumnString('status:pick: | '), /pick type.*requires values/);
   assert.throws(() => parseColumnString('created:date:2024-01-01'), /date type.*requires from\|to/);
   assert.throws(() => parseColumnString('created:date: | '), /date type.*requires from\|to/);
+  assert.throws(() => parseColumnString('sku:alphanumeric:0'), /alphanumeric.*positive integer/);
+  assert.throws(() => parseColumnString('sku:alphanumeric:-3'), /alphanumeric.*positive integer/);
+  assert.throws(() => parseColumnString('sku:alphanumeric:abc'), /alphanumeric.*positive integer/);
+  assert.throws(() => parseColumnString('sku:alphanumeric:8:lower'), /alphanumeric.*upper/);
 });
 
 test('CLI generates a file', () => {
@@ -210,6 +269,80 @@ test('CLI generates a file', () => {
   const lines = fs.readFileSync(output, 'utf8').trim().split('\n');
   assert.equal(lines[0], 'id,name');
   assert.equal(lines.length, 6);
+});
+
+test('CLI writes to stdout when -o is -', () => {
+  const { execFileSync } = require('node:child_process');
+  const cli = path.join(__dirname, '..', 'dist', 'cli.js');
+
+  const csvOut = execFileSync(process.execPath, [
+    cli, '-c', 'value:pick:ok', '-r', '2', '-o', '-',
+  ], { encoding: 'utf8' });
+  assert.equal(csvOut, 'value\nok\nok\n');
+  assert.ok(!csvOut.includes('Generated'));
+
+  const jsonOut = execFileSync(process.execPath, [
+    cli, '-c', 'value:pick:ok', '-r', '2', '-f', 'json', '-o', '-',
+  ], { encoding: 'utf8' });
+  assert.deepEqual(JSON.parse(jsonOut), [{ value: 'ok' }, { value: 'ok' }]);
+
+  const ndjsonOut = execFileSync(process.execPath, [
+    cli, '-c', 'value:pick:ok', '-r', '2', '-f', 'ndjson', '-o', '-',
+  ], { encoding: 'utf8' });
+  assert.deepEqual(ndjsonOut.trim().split('\n').map((line) => JSON.parse(line)), [
+    { value: 'ok' },
+    { value: 'ok' },
+  ]);
+});
+
+for (const option of ['--rows', '-r', '--seed', '-s']) {
+  test(`CLI rejects invalid ${option} values without creating files`, async (t) => {
+    const { spawnSync } = require('node:child_process');
+    const cli = path.join(__dirname, '..', 'dist', 'cli.js');
+    const isRows = option === '--rows' || option === '-r';
+    const invalidValues = [isRows ? '10abc' : '42abc', '1.5', 'NaN', 'Infinity', '', '   ', undefined, '--output'];
+    if (isRows) invalidValues.push('0', '-1');
+
+    for (const value of invalidValues) {
+      await t.test(value === undefined ? 'missing value' : JSON.stringify(value), () => {
+        const output = path.join(tmpDir, `invalid-${option}-${invalidValues.indexOf(value)}.csv`);
+        const args = [cli, '-c', 'id:uuid', '-o', output, option];
+        if (value !== undefined) args.push(value);
+        const result = spawnSync(process.execPath, args, { encoding: 'utf8' });
+        assert.equal(result.status, 1, result.stderr);
+        assert.match(result.stderr, isRows ? /rows must be a positive integer/ : /seed must be an integer/);
+        assert.equal(result.stdout, '');
+        assert.equal(fs.existsSync(output), false);
+      });
+    }
+  });
+}
+
+test('invalid CLI numbers preserve existing output', () => {
+  const { spawnSync } = require('node:child_process');
+  const cli = path.join(__dirname, '..', 'dist', 'cli.js');
+  const output = path.join(tmpDir, 'preserved-number.csv');
+  fs.writeFileSync(output, 'existing content\n');
+
+  for (const [option, value] of [['--rows', '10abc'], ['--seed', '42abc']]) {
+    const result = spawnSync(process.execPath, [cli, '-c', 'id:uuid', '-o', output, option, value]);
+    assert.equal(result.status, 1);
+    assert.equal(fs.readFileSync(output, 'utf8'), 'existing content\n');
+  }
+});
+
+test('CLI accepts integer numeric values including zero and negative seeds', () => {
+  const { execFileSync } = require('node:child_process');
+  const cli = path.join(__dirname, '..', 'dist', 'cli.js');
+  const longOutput = path.join(tmpDir, 'valid-long.json');
+  const shortOutput = path.join(tmpDir, 'valid-short.json');
+
+  for (const seed of ['0', '-42', '42']) {
+    execFileSync(process.execPath, [cli, '-c', 'id:uuid', '--rows', '2.0', '--seed', seed, '-o', longOutput]);
+    execFileSync(process.execPath, [cli, '-c', 'id:uuid', '-r', '2e0', '-s', seed, '-o', shortOutput]);
+    assert.equal(JSON.parse(fs.readFileSync(longOutput, 'utf8')).length, 2);
+    assert.equal(fs.readFileSync(longOutput, 'utf8'), fs.readFileSync(shortOutput, 'utf8'));
+  }
 });
 
 test('CLI accepts --format and infers JSON formats from the output extension', () => {
@@ -255,6 +388,20 @@ test('CLI accepts date ranges', () => {
     const ms = Date.parse(value);
     assert.ok(!Number.isNaN(ms), `invalid date: ${value}`);
     assert.ok(ms >= fromMs && ms <= toMs, `date out of range: ${value}`);
+test('CLI accepts alphanumeric length and upper', () => {
+  const { execFileSync } = require('node:child_process');
+  const output = path.join(tmpDir, 'cli-alphanumeric.csv');
+  execFileSync(process.execPath, [
+    path.join(__dirname, '..', 'dist', 'cli.js'),
+    '-c', 'sku:alphanumeric:12,code:alphanumeric:8:upper', '-r', '10', '-o', output,
+  ]);
+  const [header, ...rows] = fs.readFileSync(output, 'utf8').trim().split('\n');
+  assert.equal(header, 'sku,code');
+  assert.equal(rows.length, 10);
+  for (const row of rows) {
+    const [sku, code] = row.split(',');
+    assert.match(sku, /^[A-Za-z0-9]{12}$/);
+    assert.match(code, /^[A-Z0-9]{8}$/);
   }
 });
 test('generateCSV produces reproducible output when given the same seed', async () => {
@@ -298,4 +445,18 @@ test('CLI accepts --seed and -s for reproducible output', () => {
 
   assert.equal(content1, content2);
   assert.notEqual(content1, content3);
+});
+
+test('CLI exits cleanly when stdout is closed early (EPIPE)', async () => {
+  const { spawn } = require('node:child_process');
+  const cli = path.join(__dirname, '..', 'dist', 'cli.js');
+  const child = spawn(process.execPath, [cli, '-c', 'id:uuid', '-r', '200000', '-o', '-'], {
+    stdio: ['ignore', 'pipe', 'pipe'],
+  });
+  let stderr = '';
+  child.stderr.on('data', (chunk) => { stderr += chunk; });
+  child.stdout.once('data', () => child.stdout.destroy());
+  const code = await new Promise((resolve) => child.on('close', resolve));
+  assert.doesNotMatch(stderr, /Unhandled 'error'/);
+  assert.equal(code, 0, stderr);
 });
