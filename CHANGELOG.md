@@ -6,6 +6,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- CLI support for `alphanumeric` `length` and `uppercase` via `header:alphanumeric[:length][:upper]` syntax. (#17)
+
 ## [2.2.0] - 2026-10-21
 
 ### Added

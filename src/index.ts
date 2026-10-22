@@ -219,6 +219,46 @@ export function parseColumnString(columnStr: string): ColumnDefinition {
     return { header, type, values };
   }
 
+  if (type === 'alphanumeric') {
+    const result: ColumnDefinition = { header, type };
+    let index = 2;
+
+    if (parts.length > index) {
+      const token = parts[index];
+      if (token === 'upper') {
+        result.uppercase = true;
+        index += 1;
+      } else {
+        const length = Number(token);
+        if (!Number.isInteger(length) || length < 1) {
+          throw new Error(
+            `alphanumeric length for column "${header}" must be a positive integer`,
+          );
+        }
+        result.length = length;
+        index += 1;
+
+        if (parts.length > index) {
+          if (parts[index] !== 'upper') {
+            throw new Error(
+              `alphanumeric option for column "${header}" must be "upper"`,
+            );
+          }
+          result.uppercase = true;
+          index += 1;
+        }
+      }
+    }
+
+    if (parts.length > index) {
+      throw new Error(
+        `alphanumeric option for column "${header}" must be "upper"`,
+      );
+    }
+
+    return result;
+  }
+
   return { header, type };
 }
 
