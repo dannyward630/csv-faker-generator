@@ -1,5 +1,5 @@
 import { faker } from '@faker-js/faker';
-import { createObjectCsvWriter } from 'csv-writer';
+import { createObjectCsvStringifier, createObjectCsvWriter } from 'csv-writer';
 import { writeFile } from 'node:fs/promises';
 
 const COLUMN_DEFINITION_SEPARATOR = ':';
@@ -171,24 +171,48 @@ export async function generateCSV(options: GenerateOptions): Promise<void> {
     records.push(record);
   }
 
+  const toStdout = output === '-';
+  const csvHeader = columns.map((col) => ({
+    id: col.header,
+    title: col.header,
+  }));
+
   if (format === 'json') {
-    await writeFile(output, `${JSON.stringify(records, null, 2)}\n`);
+    const content = `${JSON.stringify(records, null, 2)}\n`;
+    if (toStdout) {
+      process.stdout.write(content);
+    } else {
+      await writeFile(output, content);
+    }
   } else if (format === 'ndjson') {
-    const content = records.map((record) => JSON.stringify(record)).join('\n');
-    await writeFile(output, content ? `${content}\n` : '');
+    const joined = records.map((record) => JSON.stringify(record)).join('\n');
+    const content = joined ? `${joined}\n` : '';
+    if (toStdout) {
+      process.stdout.write(content);
+    } else {
+      await writeFile(output, content);
+    }
+  } else if (toStdout) {
+    const csvStringifier = createObjectCsvStringifier({
+      header: csvHeader,
+      fieldDelimiter: delimiter,
+    });
+    process.stdout.write(csvStringifier.getHeaderString() + csvStringifier.stringifyRecords(records));
   } else {
     const csvWriter = createObjectCsvWriter({
       path: output,
-      header: columns.map((col) => ({
-        id: col.header,
-        title: col.header,
-      })),
+      header: csvHeader,
       fieldDelimiter: delimiter,
     });
     await csvWriter.writeRecords(records);
   }
 
-  console.log(`✓ Generated ${rows} rows in ${output}`);
+  const status = `✓ Generated ${rows} rows ${toStdout ? 'to stdout' : `in ${output}`}`;
+  if (toStdout) {
+    console.error(status);
+  } else {
+    console.log(status);
+  }
 }
 
 export function parseColumnString(columnStr: string): ColumnDefinition {

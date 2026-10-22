@@ -5,6 +5,12 @@ import * as path from 'node:path';
 
 const args = process.argv.slice(2);
 
+// Exit quietly when the reader closes the pipe early (e.g. `-o - | head`).
+process.stdout.on('error', (err: NodeJS.ErrnoException) => {
+  if (err.code === 'EPIPE') process.exit(0);
+  throw err;
+});
+
 function showHelp() {
   console.log(`
 CSV Faker Generator
@@ -16,7 +22,7 @@ Options:
   --columns, -c    Column definitions (format: header:type,header:type,...)
                     For pick values, use header:pick:value1|value2 (quote the argument)
   --rows, -r       Number of rows to generate (default: 10)
-  --output, -o     Output file path (default: output.csv)
+  --output, -o     Output file path (default: output.csv). Use - for stdout
   --format, -f     Output format: csv, json, or ndjson (default: inferred from output extension)
   --delimiter, -d  Field delimiter (default: ,) [options: , ; | \\t]
   --seed, -s       PRNG seed for reproducible output
@@ -40,6 +46,8 @@ Examples:
   csv-faker -c id:uuid,name:name -r 50 -o users.json
   csv-faker -c id:uuid,name:name -r 50 -f ndjson -o users.data
   csv-faker -c id:uuid,name:name -r 50 --seed 42 -o reproducible.csv
+  csv-faker -c id:uuid,email:email -r 5 -o - | head
+  csv-faker -c id:uuid -r 3 -f ndjson -o - | jq .
 `);
 }
 

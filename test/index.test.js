@@ -196,6 +196,30 @@ test('CLI generates a file', () => {
   assert.equal(lines.length, 6);
 });
 
+test('CLI writes to stdout when -o is -', () => {
+  const { execFileSync } = require('node:child_process');
+  const cli = path.join(__dirname, '..', 'dist', 'cli.js');
+
+  const csvOut = execFileSync(process.execPath, [
+    cli, '-c', 'value:pick:ok', '-r', '2', '-o', '-',
+  ], { encoding: 'utf8' });
+  assert.equal(csvOut, 'value\nok\nok\n');
+  assert.ok(!csvOut.includes('Generated'));
+
+  const jsonOut = execFileSync(process.execPath, [
+    cli, '-c', 'value:pick:ok', '-r', '2', '-f', 'json', '-o', '-',
+  ], { encoding: 'utf8' });
+  assert.deepEqual(JSON.parse(jsonOut), [{ value: 'ok' }, { value: 'ok' }]);
+
+  const ndjsonOut = execFileSync(process.execPath, [
+    cli, '-c', 'value:pick:ok', '-r', '2', '-f', 'ndjson', '-o', '-',
+  ], { encoding: 'utf8' });
+  assert.deepEqual(ndjsonOut.trim().split('\n').map((line) => JSON.parse(line)), [
+    { value: 'ok' },
+    { value: 'ok' },
+  ]);
+});
+
 for (const option of ['--rows', '-r', '--seed', '-s']) {
   test(`CLI rejects invalid ${option} values without creating files`, async (t) => {
     const { spawnSync } = require('node:child_process');
@@ -313,4 +337,18 @@ test('CLI accepts --seed and -s for reproducible output', () => {
 
   assert.equal(content1, content2);
   assert.notEqual(content1, content3);
+});
+
+test('CLI exits cleanly when stdout is closed early (EPIPE)', async () => {
+  const { spawn } = require('node:child_process');
+  const cli = path.join(__dirname, '..', 'dist', 'cli.js');
+  const child = spawn(process.execPath, [cli, '-c', 'id:uuid', '-r', '200000', '-o', '-'], {
+    stdio: ['ignore', 'pipe', 'pipe'],
+  });
+  let stderr = '';
+  child.stderr.on('data', (chunk) => { stderr += chunk; });
+  child.stdout.once('data', () => child.stdout.destroy());
+  const code = await new Promise((resolve) => child.on('close', resolve));
+  assert.doesNotMatch(stderr, /Unhandled 'error'/);
+  assert.equal(code, 0, stderr);
 });
