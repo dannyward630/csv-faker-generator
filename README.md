@@ -249,6 +249,8 @@ npx csv-faker -c id:uuid,name:name,email:email --delimiter ";" -r 50 -o contacts
 # Generate a status from fixed values (quote the argument so the shell passes `|` literally)
 npx csv-faker -c 'id:uuid,status:pick:active|inactive|pending' -r 10 -o users.csv
 
+# Generate alphanumeric codes with length and uppercase
+npx csv-faker -c 'sku:alphanumeric:12,code:alphanumeric:8:upper' -r 10 -o products.csv
 # Stream JSON to stdout
 npx csv-faker -c id:uuid -r 3 -f ndjson -o - | jq .
 
@@ -256,7 +258,7 @@ npx csv-faker -c id:uuid -r 3 -f ndjson -o - | jq .
 npx csv-faker -c customer_number:number,title:title,firstname:firstName,lastname:lastName,email:email,iban:iban,bic:bic -r 200 -o customers.csv
 ```
 
-**Note**: CLI `pick` values use `header:pick:value1|value2`; quote the `-c` argument in shells so `|` is passed literally. Advanced `alphanumeric` options and `formula` still require programmatic usage.
+**Note**: CLI `pick` values use `header:pick:value1|value2`; quote the `-c` argument in shells so `|` is passed literally. CLI `alphanumeric` options use `header:alphanumeric[:length][:upper]`. `formula` still requires programmatic usage.
 
 ## Supported Data Types
 
@@ -290,7 +292,7 @@ npx csv-faker -c customer_number:number,title:title,firstname:firstName,lastname
 | `pick` | Pick from array | Custom values | ✓* | ✓ |
 | `formula` | Calculated value | Based on other fields | ✗ | ✓ |
 
-*CLI supports the type but not advanced options (length, uppercase, values, etc.)
+*CLI `alphanumeric` uses `header:alphanumeric[:length][:upper]`; CLI `pick` uses `header:pick:value1|value2`.
 
 ## TypeScript API
 

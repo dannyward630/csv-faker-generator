@@ -178,11 +178,35 @@ test('parseColumnString parses pick values including colons', () => {
   });
 });
 
+test('parseColumnString parses alphanumeric length and upper', () => {
+  assert.deepEqual(parseColumnString('sku:alphanumeric'), { header: 'sku', type: 'alphanumeric' });
+  assert.deepEqual(parseColumnString('sku:alphanumeric:12'), {
+    header: 'sku',
+    type: 'alphanumeric',
+    length: 12,
+  });
+  assert.deepEqual(parseColumnString('code:alphanumeric:8:upper'), {
+    header: 'code',
+    type: 'alphanumeric',
+    length: 8,
+    uppercase: true,
+  });
+  assert.deepEqual(parseColumnString('code:alphanumeric:upper'), {
+    header: 'code',
+    type: 'alphanumeric',
+    uppercase: true,
+  });
+});
+
 test('parseColumnString rejects bad input', () => {
   assert.throws(() => parseColumnString('id'), /Invalid column format/);
   assert.throws(() => parseColumnString('id:nope'), /Invalid data type/);
   assert.throws(() => parseColumnString('status:pick'), /pick type.*requires values/);
   assert.throws(() => parseColumnString('status:pick: | '), /pick type.*requires values/);
+  assert.throws(() => parseColumnString('sku:alphanumeric:0'), /alphanumeric.*positive integer/);
+  assert.throws(() => parseColumnString('sku:alphanumeric:-3'), /alphanumeric.*positive integer/);
+  assert.throws(() => parseColumnString('sku:alphanumeric:abc'), /alphanumeric.*positive integer/);
+  assert.throws(() => parseColumnString('sku:alphanumeric:8:lower'), /alphanumeric.*upper/);
 });
 
 test('CLI generates a file', () => {
@@ -294,6 +318,23 @@ test('CLI accepts pick values', () => {
   assert.equal(values.length, 10);
   for (const value of values) {
     assert.ok(['active', 'inactive', 'pending'].includes(value));
+  }
+});
+
+test('CLI accepts alphanumeric length and upper', () => {
+  const { execFileSync } = require('node:child_process');
+  const output = path.join(tmpDir, 'cli-alphanumeric.csv');
+  execFileSync(process.execPath, [
+    path.join(__dirname, '..', 'dist', 'cli.js'),
+    '-c', 'sku:alphanumeric:12,code:alphanumeric:8:upper', '-r', '10', '-o', output,
+  ]);
+  const [header, ...rows] = fs.readFileSync(output, 'utf8').trim().split('\n');
+  assert.equal(header, 'sku,code');
+  assert.equal(rows.length, 10);
+  for (const row of rows) {
+    const [sku, code] = row.split(',');
+    assert.match(sku, /^[A-Za-z0-9]{12}$/);
+    assert.match(code, /^[A-Z0-9]{8}$/);
   }
 });
 test('generateCSV produces reproducible output when given the same seed', async () => {
