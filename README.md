@@ -252,6 +252,7 @@ npx csv-faker -c 'id:uuid,status:pick:active|inactive|pending' -r 10 -o users.cs
 
 # Generate dates within a range (same `|` quoting rules as pick)
 npx csv-faker -c 'id:uuid,created:date:2024-01-01|2024-12-31' -r 10 -o orders.csv
+
 # Generate alphanumeric codes with length and uppercase
 npx csv-faker -c 'sku:alphanumeric:12,code:alphanumeric:8:upper' -r 10 -o products.csv
 # Stream JSON to stdout
@@ -261,8 +262,7 @@ npx csv-faker -c id:uuid -r 3 -f ndjson -o - | jq .
 npx csv-faker -c customer_number:number,title:title,firstname:firstName,lastname:lastName,email:email,iban:iban,bic:bic -r 200 -o customers.csv
 ```
 
-**Note**: CLI `pick` values use `header:pick:value1|value2`, and date ranges use `header:date:from|to`; quote the `-c` argument in shells so `|` is passed literally. Advanced `alphanumeric` options, `dateFormat`, and `formula` still require programmatic usage.
-**Note**: CLI `pick` values use `header:pick:value1|value2`; quote the `-c` argument in shells so `|` is passed literally. CLI `alphanumeric` options use `header:alphanumeric[:length][:upper]`. `formula` still requires programmatic usage.
+**Note**: CLI `pick` values use `header:pick:value1|value2`, date ranges use `header:date:from|to`, and `alphanumeric` options use `header:alphanumeric[:length][:upper]`; quote the `-c` argument in shells so `|` is passed literally. `dateFormat` and `formula` still require programmatic usage.
 
 ## Supported Data Types
 
@@ -296,8 +296,7 @@ npx csv-faker -c customer_number:number,title:title,firstname:firstName,lastname
 | `pick` | Pick from array | Custom values | ✓* | ✓ |
 | `formula` | Calculated value | Based on other fields | ✗ | ✓ |
 
-*CLI supports `pick` values and `date` ranges via `header:type:...` syntax. Other advanced options (`length`, `uppercase`, `dateFormat`, `formula`, etc.) need programmatic usage.
-*CLI `alphanumeric` uses `header:alphanumeric[:length][:upper]`; CLI `pick` uses `header:pick:value1|value2`.
+*CLI supports `pick` (`header:pick:value1|value2`), `date` ranges (`header:date:from|to`) and `alphanumeric` (`header:alphanumeric[:length][:upper]`). Other options (`dateFormat`, `formula`, etc.) need programmatic usage.
 
 ## TypeScript API
 

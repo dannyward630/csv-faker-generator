@@ -227,6 +227,9 @@ test('parseColumnString parses date ranges', () => {
     type: 'date',
     from: '2024-01-01',
     to: '2024-12-31',
+  });
+});
+
 test('parseColumnString parses alphanumeric length and upper', () => {
   assert.deepEqual(parseColumnString('sku:alphanumeric'), { header: 'sku', type: 'alphanumeric' });
   assert.deepEqual(parseColumnString('sku:alphanumeric:12'), {
@@ -388,6 +391,9 @@ test('CLI accepts date ranges', () => {
     const ms = Date.parse(value);
     assert.ok(!Number.isNaN(ms), `invalid date: ${value}`);
     assert.ok(ms >= fromMs && ms <= toMs, `date out of range: ${value}`);
+  }
+});
+
 test('CLI accepts alphanumeric length and upper', () => {
   const { execFileSync } = require('node:child_process');
   const output = path.join(tmpDir, 'cli-alphanumeric.csv');

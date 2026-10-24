@@ -36,9 +36,7 @@ Data Types:
   number, date, boolean, url, ip, username, password, iban, bic,
   bankName, alphanumeric, pick
 
-  Note: Advanced features (alphanumeric length, dateFormat, and formula)
-  require programmatic usage. See README for examples.
-  Note: formula requires programmatic usage. See README for examples.
+  Note: dateFormat and formula require programmatic usage. See README for examples.
 
 Examples:
   csv-faker -c id:uuid,name:name,email:email -r 100 -o users.csv

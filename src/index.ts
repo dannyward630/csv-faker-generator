@@ -274,6 +274,8 @@ export function parseColumnString(columnStr: string): ColumnDefinition {
       throw new Error(`date type for column "${header}" requires from|to ISO dates after the second colon`);
     }
     return { header, type, from: bounds[0], to: bounds[1] };
+  }
+
   if (type === 'alphanumeric') {
     const result: ColumnDefinition = { header, type };
     let index = 2;
