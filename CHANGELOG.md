@@ -6,13 +6,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.3.0] - 2026-10-25
+
 ### Added
-- Optional `from` / `to` ISO date bounds and `dateFormat` (`iso` | `date`) for the `date` type; CLI accepts `header:date:from|to`. (#16)
-- CLI support for `alphanumeric` `length` and `uppercase` via `header:alphanumeric[:length][:upper]` syntax. (#17)
-- CLI `-o -` writes generated data to stdout (CSV via stringifier; JSON/NDJSON via `process.stdout`). Status line goes to stderr (`… to stdout`) so pipes stay clean, and closing the pipe early (e.g. `| head`) exits cleanly instead of crashing with EPIPE. (#18)
+- Optional `from` / `to` ISO date bounds and `dateFormat` (`iso` | `date`) for the `date` type; CLI accepts `header:date:from|to`. Thanks [@dbdefault](https://github.com/dbdefault)! (#23)
+- CLI support for `alphanumeric` `length` and `uppercase` via `header:alphanumeric[:length][:upper]` syntax. Thanks [@dbdefault](https://github.com/dbdefault)! (#22)
+- CLI `-o -` writes generated data to stdout (CSV via stringifier; JSON/NDJSON via `process.stdout`). Status line goes to stderr (`… to stdout`) so pipes stay clean, and closing the pipe early (e.g. `| head`) exits cleanly instead of crashing with EPIPE. Thanks [@dbdefault](https://github.com/dbdefault)! (#21)
 
 ### Fixed
-- Reject invalid or fractional CLI `--rows` / `--seed` values and unknown programmatic output formats. (#19)
+- Reject invalid or fractional CLI `--rows` / `--seed` values and unknown programmatic output formats. Thanks [@KingEmma7](https://github.com/KingEmma7)! (#20)
 
 ## [2.2.0] - 2026-10-21
 
@@ -55,7 +57,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - Initial release: CLI (`csv-faker`) and programmatic `generateCSV` API with Faker-backed data types.
 
-[Unreleased]: https://github.com/manojkken/csv-faker-generator/compare/v2.2.0...HEAD
+[Unreleased]: https://github.com/manojkken/csv-faker-generator/compare/v2.3.0...HEAD
+[2.3.0]: https://github.com/manojkken/csv-faker-generator/compare/v2.2.0...v2.3.0
 [2.2.0]: https://github.com/manojkken/csv-faker-generator/compare/v2.1.0...v2.2.0
 [2.1.0]: https://github.com/manojkken/csv-faker-generator/compare/v2.0.1...v2.1.0
 [2.0.1]: https://github.com/manojkken/csv-faker-generator/compare/v2.0.0...v2.0.1
